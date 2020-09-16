@@ -7,6 +7,7 @@ const {series, parallel, watch, src, dest} = require('gulp')
 , babel = require('gulp-babel')
 , uglify = require('gulp-uglify')
 , CacheBuster = require('gulp-cachebust')
+, browserSync = require('browser-sync').create();
 
 var cachebust = new CacheBuster();
 
@@ -53,15 +54,23 @@ function buildIndex(){
   .pipe(dest('dist'));
 }
 
+function browserRefresh() {
+  browserSync.init({
+        server: "./dist"
+    });
+}
+
 const build = series(buildAppJs, buildPages, buildIndex, buildCss, buildImages, getJson);
 
 function watchFiles() {
-  return watch(['./public/index.html','./partials/*.html', './public/assets/styles/*.*', './public/app/**/*.js', './public/app/views/*.html', '.public/assets/images/**/*.*', './*.json'], {events: 'all'}, series('build'));
+  return watch(['./public/index.html','./partials/*.html', './public/assets/styles/*.*', './public/app/**/*.js', './public/app/views/*.html', '.public/assets/images/**/*.*', './*.json'], {events: 'all'}, series('build')).on('change', browserSync.reload);
 }
 
 exports.buildImages = buildImages;
 exports.getJson = getJson;
 exports.buildPages = buildPages;
+exports.browserRefresh = browserRefresh;
+exports.watchFiles = watchFiles;
 exports.watch = watch;
 exports.build = build;
-exports.default = series(build, watchFiles);
+exports.default = parallel(build, watchFiles, series(browserRefresh));
